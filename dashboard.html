@@ -52,9 +52,10 @@
 
     <canvas id="bubbleCanvas"></canvas>
 
-    <div class="dashboard-container max-w-7xl mx-auto space-y-8">
+    <!-- Increased vertical spacing to space-y-12 -->
+    <div class="dashboard-container max-w-7xl mx-auto space-y-12">
         <!-- Header -->
-        <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-20">
             <div>
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 text-xs font-semibold text-pink-700 mb-2 border border-white">
                     <span>✨ Active Session</span>
@@ -69,7 +70,7 @@
         </div>
 
         <!-- Stat Modules Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-20">
             <div class="glass-panel p-5 rounded-2xl">
                 <div class="text-pink-600 font-bold text-xs uppercase tracking-wider mb-1">Live Total Calls Made</div>
                 <div id="liveTotalCalls" class="text-3xl font-black text-gray-800">Loading...</div>
@@ -90,8 +91,8 @@
             </div>
         </div>
 
-        <!-- Filter Bar Hub -->
-        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+        <!-- Filter Bar Hub (Set high z-index z-30 so dropdowns float over lower card) -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6 relative z-30 overflow-visible">
             <div class="flex items-center justify-between border-b border-pink-200/50 pb-4">
                 <h2 class="text-xl font-bold text-gray-800">Call Filter Matrix</h2>
                 <div class="flex gap-3">
@@ -110,7 +111,7 @@
                 <div class="glass-panel p-4 rounded-2xl space-y-2 relative">
                     <label class="text-xs font-bold text-pink-700 uppercase">Call ID</label>
                     <input type="text" id="filterCallId" data-field="call_id" placeholder="Click or type to search..." class="filter-input w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400" autocomplete="off">
-                    <div id="dropdownCallId" class="absolute left-4 right-4 z-20 max-h-32 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-lg p-2 rounded-xl border border-pink-200"></div>
+                    <div id="dropdownCallId" class="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-xl p-2 rounded-xl border border-pink-200"></div>
                 </div>
 
                 <!-- 2. Call Duration -->
@@ -126,35 +127,35 @@
                 <div class="glass-panel p-4 rounded-2xl space-y-2 relative">
                     <label class="text-xs font-bold text-pink-700 uppercase">Call Outcome</label>
                     <input type="text" id="filterOutcome" data-field="call_outcome" placeholder="Search outcome..." class="filter-input w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400" autocomplete="off">
-                    <div id="dropdownOutcome" class="absolute left-4 right-4 z-20 max-h-32 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-lg p-2 rounded-xl border border-pink-200"></div>
+                    <div id="dropdownOutcome" class="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-xl p-2 rounded-xl border border-pink-200"></div>
                 </div>
 
                 <!-- 4. Caller Name -->
                 <div class="glass-panel p-4 rounded-2xl space-y-2 relative">
                     <label class="text-xs font-bold text-pink-700 uppercase">Caller Name</label>
                     <input type="text" id="filterCallerName" data-field="caller_name" placeholder="Search caller..." class="filter-input w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400" autocomplete="off">
-                    <div id="dropdownCallerName" class="absolute left-4 right-4 z-20 max-h-32 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-lg p-2 rounded-xl border border-pink-200"></div>
+                    <div id="dropdownCallerName" class="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-xl p-2 rounded-xl border border-pink-200"></div>
                 </div>
 
                 <!-- 5. Company Kind -->
                 <div class="glass-panel p-4 rounded-2xl space-y-2 relative">
                     <label class="text-xs font-bold text-pink-700 uppercase">Company Kind</label>
                     <input type="text" id="filterCompanyKind" data-field="company_kind" placeholder="Search kind..." class="filter-input w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400" autocomplete="off">
-                    <div id="dropdownCompanyKind" class="absolute left-4 right-4 z-20 max-h-32 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-lg p-2 rounded-xl border border-pink-200"></div>
+                    <div id="dropdownCompanyKind" class="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-xl p-2 rounded-xl border border-pink-200"></div>
                 </div>
 
                 <!-- 6. Company Name -->
                 <div class="glass-panel p-4 rounded-2xl space-y-2 relative">
                     <label class="text-xs font-bold text-pink-700 uppercase">Company Name</label>
                     <input type="text" id="filterCompanyName" data-field="company_name" placeholder="Search company..." class="filter-input w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400" autocomplete="off">
-                    <div id="dropdownCompanyName" class="absolute left-4 right-4 z-20 max-h-32 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-lg p-2 rounded-xl border border-pink-200"></div>
+                    <div id="dropdownCompanyName" class="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-xl p-2 rounded-xl border border-pink-200"></div>
                 </div>
 
                 <!-- 7. Prospect Role -->
                 <div class="glass-panel p-4 rounded-2xl space-y-2 relative">
                     <label class="text-xs font-bold text-pink-700 uppercase">Prospect Role</label>
                     <input type="text" id="filterProspectRole" data-field="prospect_role" placeholder="Search role..." class="filter-input w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400" autocomplete="off">
-                    <div id="dropdownProspectRole" class="absolute left-4 right-4 z-20 max-h-32 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-lg p-2 rounded-xl border border-pink-200"></div>
+                    <div id="dropdownProspectRole" class="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-xl p-2 rounded-xl border border-pink-200"></div>
                 </div>
 
                 <!-- 8. Conversation Contains -->
@@ -165,8 +166,8 @@
             </div>
         </div>
 
-        <!-- Result Set Table -->
-        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-4">
+        <!-- Result Set Table (Set lower z-index z-10) -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-4 relative z-10">
             <h2 class="text-xl font-bold text-gray-800">Filtered Calls Result Set</h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
