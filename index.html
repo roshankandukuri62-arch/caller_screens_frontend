@@ -175,28 +175,33 @@
         const result = await response.json();
         console.log("📥 API Response received:", result);
 
-        if (response.ok && result.success) {
-          console.log("✅ Success condition met! Saving employee_id to localStorage...");
+        // Check response.ok or result.success to ensure robust success handling
+        if (response.ok && (result.success !== false)) {
+          console.log("✅ Success! Forcing employee_id into localStorage...");
           
-          // Save employee_id to localStorage for tracking in call logs
+          // Save employee_id directly to localStorage
           localStorage.setItem('employee_id', employee_id);
-          
-          console.log("🔍 Verified localStorage employee_id:", localStorage.getItem('employee_id'));
+          console.log("🔍 Verified localStorage value:", localStorage.getItem('employee_id'));
 
-          // Redirect on success to dashboard.html
+          // Redirect on success with a short delay to guarantee storage writing
           const targetUrl = result.redirectUrl || '/dashboard.html';
           console.log("🌐 Redirecting to:", targetUrl);
           
-          window.location.href = targetUrl;
+          setTimeout(() => {
+            window.location.href = targetUrl;
+          }, 200);
         } else {
           console.warn("⚠️ Login rejected or success was false:", result);
           showError(result.message || 'Invalid credentials. Please try again.');
+          // Restore Button State on error
+          submitBtn.disabled = false;
+          btnText.textContent = 'Sign In';
+          btnSpinner.classList.add('hidden');
         }
       } catch (error) {
         console.error('❌ Network error during login:', error);
         showError('Unable to reach auth server. Please check your network.');
-      } finally {
-        // Restore Button State
+        // Restore Button State on error
         submitBtn.disabled = false;
         btnText.textContent = 'Sign In';
         btnSpinner.classList.add('hidden');
