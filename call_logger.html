@@ -258,7 +258,7 @@
         ];
 
         let currentTab = 0;
-        let prospectData = { isNew: '', company: '', name: '', role: '', moodIndex: 1 };
+        let prospectData = { isNew: '', company: '', name: '', role: '', moodIndex: 1, isExistingCompanySelected: false };
         let cachedCompanies = [];
 
         // Render Tabs Header
@@ -337,6 +337,7 @@
         // Prospect Details Logic
         async function toggleProspectMode(mode) {
             prospectData.isNew = mode;
+            prospectData.isExistingCompanySelected = false;
             const input = document.getElementById('inputCompanyName');
             const dropdown = document.getElementById('dropdownCompanyList');
 
@@ -374,9 +375,17 @@
 
         companyInput.addEventListener('input', () => {
             if (prospectData.isNew === 'no') {
-                const query = companyInput.value.toLowerCase();
+                // Check if current text exactly matches one of the cached companies
+                const currentVal = companyInput.value.trim();
+                const exactMatch = cachedCompanies.find(c => String(c).toLowerCase() === currentVal.toLowerCase());
+                
+                prospectData.isExistingCompanySelected = !!exactMatch;
+
+                const query = currentVal.toLowerCase();
                 const filtered = cachedCompanies.filter(c => String(c).toLowerCase().includes(query));
                 showCompanyDropdown(filtered);
+            } else {
+                prospectData.isExistingCompanySelected = false;
             }
             validateProspectTab();
         });
@@ -394,6 +403,7 @@
                 div.innerText = comp;
                 div.addEventListener('click', () => {
                     companyInput.value = comp;
+                    prospectData.isExistingCompanySelected = true;
                     companyDropdown.classList.add('hidden');
                     validateProspectTab();
                 });
@@ -420,7 +430,16 @@
         }
 
         function isProspectValid() {
-            return prospectData.isNew !== '' && prospectData.company !== '' && prospectData.name !== '' && prospectData.role !== '';
+            if (prospectData.isNew === '' || prospectData.name === '' || prospectData.role === '' || prospectData.company === '') {
+                return false;
+            }
+
+            // Strict check: If existing company mode ('no'), company MUST be explicitly selected from cached options
+            if (prospectData.isNew === 'no') {
+                return prospectData.isExistingCompanySelected || cachedCompanies.some(c => String(c).toLowerCase() === prospectData.company.toLowerCase());
+            }
+
+            return true;
         }
 
         // Mood Config with Exact Zone Colors
@@ -436,7 +455,6 @@
             prospectData.moodIndex = index;
             const mood = moodMap[index];
 
-            // Update fill line and thumb position
             const fill = document.getElementById('spectrumFill');
             const thumb = document.getElementById('spectrumThumb');
 
@@ -446,7 +464,6 @@
             thumb.style.bottom = `calc(${mood.percent}% - 12px)`;
             thumb.style.borderColor = mood.handleColor;
 
-            // Update Badges
             const badge = document.getElementById('sentimentBadge');
             badge.innerText = mood.name;
             badge.className = `w-full py-2 px-3 rounded-2xl text-xs font-bold text-white shadow-sm transition-all text-center ${mood.fillClass}`;
@@ -460,7 +477,6 @@
             renderInitialResponses(index);
         }
 
-        // Custom Drag & Click Handling for the Spectrum Bar
         let isDragging = false;
         const track = document.getElementById('spectrumTrack');
 
@@ -470,7 +486,6 @@
             const clientY = e.clientY || (e.touches && e.touches[0].clientY);
             if (!clientY) return;
 
-            // Calculate percentage from bottom to top
             let offsetY = rect.bottom - clientY;
             let ratio = Math.max(0, Math.min(1, offsetY / rect.height));
 
@@ -490,7 +505,6 @@
                 isDragging = false;
             });
 
-            // Mobile Touch Support
             track.addEventListener('touchstart', (e) => {
                 isDragging = true;
                 handlePointerMove(e);
