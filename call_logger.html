@@ -681,13 +681,23 @@
             const responses = getStagePlaybook(stageId, moodKey);
             const item = responses[responseIdx];
 
-            // Store internally in prospectData state
-            prospectData.selectedResponses[`stage_${stageId}`] = {
-                timestamp: new Date().toISOString(),
-                mood: moodMap[moodKey].name,
-                statement: item.p,
-                logSummary: item.log || item.p
-            };
+            // Store internally in prospectData state with full Stage 1 tracking support
+            if (stageId === 1) {
+                prospectData.selectedResponses[`stage_1`] = {
+                    timestamp: new Date().toISOString(),
+                    mood: moodMap[moodKey].name,
+                    prospect_statement: item.p,
+                    caller_reply: item.c,
+                    caller_note: item.note || null
+                };
+            } else {
+                prospectData.selectedResponses[`stage_${stageId}`] = {
+                    timestamp: new Date().toISOString(),
+                    mood: moodMap[moodKey].name,
+                    prospect_statement: item.p,
+                    log_summary: item.log || item.p
+                };
+            }
 
             const replyBox = document.getElementById(`callerReplyBox-${stageId}`);
             const replyText = document.getElementById(`callerReplyText-${stageId}`);
@@ -714,10 +724,63 @@
             replyBox.classList.remove('hidden');
         }
 
-        function endCall() {
-            if (confirm("Are you sure you want to end this call and save logs?")) {
-                alert("Call logged successfully!");
+        async function endCall() {
+            if (!confirm("Are you sure you want to end this call and save logs?")) return;
+
+            // Gather all manual notes from textareas
+            const stageNotes = {
+                stage_1: document.getElementById('notesStage1')?.value || '',
+                stage_2: document.getElementById('notesStage2')?.value || '',
+                stage_3: document.getElementById('notesStage3')?.value || '',
+                stage_4: document.getElementById('notesStage4')?.value || '',
+                stage_5: document.getElementById('notesStage5')?.value || ''
+            };
+
+            // Build payload matching your Supabase table schema
+            const payload = {
+                employee_id: localStorage.getItem('employee_id') || 'EMP_DEMO',
+                company_name: prospectData.company,
+                prospect_name: prospectData.name,
+                prospect_role: prospectData.role,
+                is_new_prospect: prospectData.isNew,
+                final_stage_reached: currentTab,
+                final_mood: moodMap[prospectData.moodIndex].name,
+                stage_notes: stageNotes,
+                selected_responses: prospectData.selectedResponses
+            };
+
+            try {
+                // UI feedback
+                const endCallBtns = document.querySelectorAll("button[onclick='endCall()']");
+                endCallBtns.forEach(b => {
+                    b.innerText = "Saving logs...";
+                    b.disabled = true;
+                });
+
+                const response = await fetch(`${BACKEND_URL}/api/calls/save-log`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to save call log.');
+                }
+
+                alert(`Call logged successfully! ID: ${result.call_logger_id}`);
                 window.location.href = '/dashboard.html';
+            } catch (error) {
+                console.error('Error saving call log:', error);
+                alert(`Error saving call log: ${error.message}`);
+                
+                // Reset buttons if it fails
+                const endCallBtns = document.querySelectorAll("button[onclick='endCall()']");
+                endCallBtns.forEach(b => {
+                    b.innerText = "End Call";
+                    b.disabled = false;
+                });
             }
         }
 
