@@ -173,6 +173,9 @@
         const result = await response.json();
 
         if (response.ok && result.success) {
+          // Save employee_id to localStorage for tracking in call logs
+          localStorage.setItem('employee_id', employee_id);
+
           // Redirect on success to dashboard.html
           window.location.href = result.redirectUrl || '/dashboard.html';
         } else {
