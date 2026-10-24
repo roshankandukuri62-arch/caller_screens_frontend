@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDGMS - Live Call Logger</title>
+    <title>PDGMS - Live Call Assistant</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -55,7 +55,7 @@
         /* Custom Vertical Spectrum Slider */
         input[type=range].spectrum-slider {
             -webkit-appearance: none;
-            writing-mode: bt-lr; /* Vertical orientation IE/Edge */
+            writing-mode: bt-lr;
             appearance: slider-vertical;
             width: 12px;
             height: 220px;
@@ -119,7 +119,7 @@
         </div>
 
         <!-- TAB CONTENT CONTAINERS -->
-        <div id="tabContentArea" class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+        <div id="tabContentArea" class="glass-card rounded-3xl p-6 sm:p-8 space-y-6 overflow-visible">
 
             <!-- TAB 0: PROSPECT DETAILS -->
             <div id="tabContent-0" class="tab-pane space-y-6">
@@ -142,11 +142,12 @@
                         </div>
                     </div>
 
-                    <!-- Company Name Box -->
-                    <div class="glass-panel p-5 rounded-2xl space-y-2">
+                    <!-- Company Name Box (Dynamic Dropdown / Input) -->
+                    <div class="glass-panel p-5 rounded-2xl space-y-2 relative">
                         <label class="text-xs font-bold text-pink-700 uppercase">Company Name</label>
-                        <div id="companyInputContainer">
-                            <input type="text" id="inputCompanyName" placeholder="Select 'Is this a new prospect?' first" disabled class="w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none">
+                        <div id="companyInputContainer" class="relative">
+                            <input type="text" id="inputCompanyName" placeholder="Select 'Is this a new prospect?' first" disabled class="w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none" autocomplete="off">
+                            <div id="dropdownCompanyList" class="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto space-y-1 text-xs hidden bg-white shadow-xl p-2 rounded-xl border border-pink-200"></div>
                         </div>
                     </div>
 
@@ -245,7 +246,6 @@
             </div>
 
             <!-- TABS 2 TO 8: PLACEHOLDERS -->
-            <!-- Placeholder tabs 2 through 8 generated dynamically -->
             <div id="placeholderTabContent"></div>
 
         </div>
@@ -269,8 +269,9 @@
 
         let currentTab = 0;
         let prospectData = { isNew: '', company: '', name: '', role: '' };
+        let cachedCompanies = [];
 
-        // Render Tabs
+        // Render Tabs Header
         function renderTabs() {
             const container = document.getElementById('tabContainer');
             container.innerHTML = stagesConfig.map((stage, idx) => `
@@ -307,7 +308,6 @@
         }
 
         function switchTab(tabIdx) {
-            // Prevent navigating past Prospect Details if not validated
             if (tabIdx > 0 && !isProspectValid()) {
                 alert('Please complete all Prospect Details first!');
                 return;
@@ -327,7 +327,6 @@
 
             currentTab = tabIdx;
 
-            // Toggle On Call Banner visibility
             const banner = document.getElementById('onCallBanner');
             if (tabIdx > 0) {
                 banner.classList.remove('hidden');
@@ -345,31 +344,82 @@
             }
         }
 
-        // Prospect Details Logic
+        // Prospect Details Logic (Interactive Searchable Dropdown)
         async function toggleProspectMode(mode) {
             prospectData.isNew = mode;
-            const container = document.getElementById('companyInputContainer');
+            const input = document.getElementById('inputCompanyName');
+            const dropdown = document.getElementById('dropdownCompanyList');
 
             if (mode === 'yes') {
-                container.innerHTML = `<input type="text" id="inputCompanyName" placeholder="e.g. Orbit Automation Ltd" oninput="validateProspectTab()" class="w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400">`;
+                input.value = '';
+                input.disabled = false;
+                input.placeholder = "Type new company name...";
+                dropdown.classList.add('hidden');
             } else {
-                container.innerHTML = `<select id="inputCompanyName" onchange="validateProspectTab()" class="w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none"><option value="">Loading existing companies...</option></select>`;
+                input.value = '';
+                input.disabled = false;
+                input.placeholder = "Click or type to search existing companies...";
                 
-                try {
-                    const res = await fetch(`${BACKEND_URL}/api/calls/filter-options/company_name`);
-                    const data = await res.json();
-                    const options = data.options || [];
-                    const select = document.getElementById('inputCompanyName');
-                    select.innerHTML = '<option value="">Select Company...</option>' + options.map(c => `<option value="${c}">${c}</option>`).join('');
-                } catch (e) {
-                    console.error('Failed to load companies:', e);
+                if (cachedCompanies.length === 0) {
+                    try {
+                        const res = await fetch(`${BACKEND_URL}/api/calls/filter-options/company_name`);
+                        const data = await res.json();
+                        cachedCompanies = data.options || [];
+                    } catch (e) {
+                        console.error('Failed to load companies:', e);
+                    }
                 }
             }
             validateProspectTab();
         }
 
+        // Searchable Dropdown Event Listeners for Company Name Box
+        const companyInput = document.getElementById('inputCompanyName');
+        const companyDropdown = document.getElementById('dropdownCompanyList');
+
+        companyInput.addEventListener('focus', () => {
+            if (prospectData.isNew === 'no') {
+                showCompanyDropdown(cachedCompanies);
+            }
+        });
+
+        companyInput.addEventListener('input', () => {
+            if (prospectData.isNew === 'no') {
+                const query = companyInput.value.toLowerCase();
+                const filtered = cachedCompanies.filter(c => String(c).toLowerCase().includes(query));
+                showCompanyDropdown(filtered);
+            }
+            validateProspectTab();
+        });
+
+        function showCompanyDropdown(list) {
+            companyDropdown.innerHTML = '';
+            if (list.length === 0) {
+                companyDropdown.classList.add('hidden');
+                return;
+            }
+            companyDropdown.classList.remove('hidden');
+            list.slice(0, 20).forEach(comp => {
+                const div = document.createElement('div');
+                div.className = 'px-3 py-1.5 hover:bg-pink-100 rounded-lg cursor-pointer text-gray-800 font-medium text-xs';
+                div.innerText = comp;
+                div.addEventListener('click', () => {
+                    companyInput.value = comp;
+                    companyDropdown.classList.add('hidden');
+                    validateProspectTab();
+                });
+                companyDropdown.appendChild(div);
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!companyInput.contains(e.target) && !companyDropdown.contains(e.target)) {
+                companyDropdown.classList.add('hidden');
+            }
+        });
+
         function validateProspectTab() {
-            const companyInput = document.getElementById('inputCompanyName');
             const nameInput = document.getElementById('inputProspectName');
             const roleInput = document.getElementById('inputProspectRole');
 
