@@ -75,7 +75,10 @@
         <!-- Dynamic On Call Banner -->
         <div id="onCallBanner" class="hidden glass-card rounded-2xl p-4 border-l-8 border-pink-500 flex items-center justify-between">
             <div>
-                <div class="text-[10px] font-extrabold text-pink-700 uppercase tracking-widest">On a call with</div>
+                <div class="text-[10px] font-extrabold text-pink-700 uppercase tracking-widest flex items-center gap-2">
+                    <span>On a call with</span>
+                    <span id="bannerProspectTypeBadge" class="px-2 py-0.5 rounded-md bg-pink-100 text-pink-800 text-[9px] font-black uppercase">Existing Contact</span>
+                </div>
                 <div class="flex items-baseline gap-3 mt-0.5">
                     <span id="bannerCompanyName" class="text-xl font-black text-gray-800">Company Name</span>
                     <span class="text-sm font-bold text-gray-700">| <span id="bannerProspectName">Prospect Name</span></span>
@@ -158,8 +161,8 @@
             <!-- TAB 1: THE START -->
             <div id="tabContent-1" class="tab-pane hidden space-y-6">
                 <!-- Guidance Header Phrase -->
-                <div class="p-4 rounded-2xl bg-gradient-to-r from-pink-100/80 to-blue-100/80 border border-white text-xs text-pink-900 font-semibold leading-relaxed">
-                    💡 <strong>Stage Focus:</strong> State who you are and introduce Meridian Growth Partners clearly. If it's an existing contact, remind them of your prior interaction; if new, politely offer a tailored sample growth report to help them realize their business's full growth potential.
+                <div id="stage1Guidance" class="p-4 rounded-2xl bg-gradient-to-r from-pink-100/80 to-blue-100/80 border border-white text-xs text-pink-900 font-semibold leading-relaxed">
+                    💡 <strong>Stage Focus:</strong> State who you are and introduce Meridian Growth Partners clearly.
                 </div>
 
                 <!-- Main Interactive Playbook Grid -->
@@ -196,7 +199,7 @@
                     <!-- Stage 1 Initial Replies Playbook -->
                     <div class="md:col-span-8 space-y-4">
                         <div class="text-xs font-bold text-gray-700 flex justify-between items-center">
-                            <span>Initial Prospect Response to Introduction:</span>
+                            <span id="responseSectionTitle">Initial Prospect Response:</span>
                             <span class="text-[10px] text-pink-600 font-normal">*Click a response to view tailored caller reply</span>
                         </div>
 
@@ -206,10 +209,16 @@
                         </div>
 
                         <!-- Selected Reply Playbook Box -->
-                        <div id="callerReplyBox" class="hidden p-5 rounded-2xl bg-white/90 border-2 border-pink-400 space-y-2 shadow-md">
+                        <div id="callerReplyBox" class="hidden p-5 rounded-2xl bg-white/90 border-2 border-pink-400 space-y-3 shadow-md">
                             <div class="text-[10px] font-black text-pink-700 uppercase tracking-widest flex items-center gap-1">
                                 <span>🎯 Tailored Reply — Meridian Growth Partners</span>
                             </div>
+                            
+                            <!-- Caller Guidance Note Box (Used for Existing Prospect Mode) -->
+                            <div id="callerNoteBox" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+                                📌 <strong class="text-amber-800">Caller Guidance Note:</strong> <span id="callerNoteText"></span>
+                            </div>
+
                             <p id="callerReplyText" class="text-xs text-gray-800 font-medium leading-relaxed">
                                 Click any response above to view your recommended response.
                             </p>
@@ -323,6 +332,24 @@
                 document.getElementById('bannerCompanyName').innerText = prospectData.company;
                 document.getElementById('bannerProspectName').innerText = prospectData.name;
                 document.getElementById('bannerProspectRole').innerText = `(${prospectData.role})`;
+
+                const typeBadge = document.getElementById('bannerProspectTypeBadge');
+                if (typeBadge) {
+                    typeBadge.innerText = prospectData.isNew === 'no' ? 'Existing Contact' : 'New Prospect';
+                    typeBadge.className = prospectData.isNew === 'no' 
+                        ? 'px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[9px] font-black uppercase' 
+                        : 'px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[9px] font-black uppercase';
+                }
+
+                // Update Guidance Header Phrase
+                const guidance = document.getElementById('stage1Guidance');
+                if (guidance) {
+                    if (prospectData.isNew === 'no') {
+                        guidance.innerHTML = `💡 <strong>Stage Focus (Existing Contact):</strong> You have interacted with this prospect previously. Remind them subtly of who you are and where you left off. Do not re-pitch basic services.`;
+                    } else {
+                        guidance.innerHTML = `💡 <strong>Stage Focus (New Prospect):</strong> State who you are and introduce Meridian Growth Partners clearly. Offer a tailored sample growth report to help them realize their full growth potential.`;
+                    }
+                }
             } else {
                 banner.classList.add('hidden');
             }
@@ -375,7 +402,6 @@
 
         companyInput.addEventListener('input', () => {
             if (prospectData.isNew === 'no') {
-                // Check if current text exactly matches one of the cached companies
                 const currentVal = companyInput.value.trim();
                 const exactMatch = cachedCompanies.find(c => String(c).toLowerCase() === currentVal.toLowerCase());
                 
@@ -434,7 +460,6 @@
                 return false;
             }
 
-            // Strict check: If existing company mode ('no'), company MUST be explicitly selected from cached options
             if (prospectData.isNew === 'no') {
                 return prospectData.isExistingCompanySelected || cachedCompanies.some(c => String(c).toLowerCase() === prospectData.company.toLowerCase());
             }
@@ -517,85 +542,66 @@
             });
         }
 
-        // Tailored Playbook Matrix mapped by Mood
+        // Tailored Playbook Matrix dynamically adapting to NEW vs EXISTING prospect
         function getStage1Playbook(moodKey) {
             const comp = prospectData.company || "your business";
-            
-            const matrix = {
-                0: [ // Disinterested
+            const name = prospectData.name ? prospectData.name.split(' ')[0] : 'Sir/Madam';
+            const isExisting = prospectData.isNew === 'no';
+
+            if (isExisting) {
+                // EXISTING COMPANY RESPONSES: Subtle reference, ask for suitable time if busy, guidance notes
+                return [
                     { 
                         p: "Come again? Who is this?", 
-                        c: `I am calling from Meridian Growth Partners. I will take just 30 seconds to share a customized sample growth report specifically structured for ${comp} to help you identify untapped expansion opportunities.` 
+                        c: `This is Roshan calling from Meridian Growth Partners, ${name}. We spoke previously regarding strategic growth initiatives for ${comp}.`,
+                        note: null
                     },
                     { 
                         p: "Okay, go ahead.", 
-                        c: `Thank you. At Meridian Growth Partners, we prepare sector-specific growth reports and market research for Indian manufacturers. I'd love to share a complimentary sample benchmarked for ${comp}.` 
+                        c: `Great! I'm following up on our previous discussion regarding ${comp}.`,
+                        note: "Briefly remind the prospect of where you left off in your last conversation and continue seamlessly."
                     },
                     { 
                         p: "Why are you calling?", 
-                        c: `I am reaching out to share a sample growth report tailored to ${comp} and your manufacturing sector to help you realize your business's full growth potential.` 
+                        c: `I am following up on our previous interaction regarding your expansion plans at ${comp}.`,
+                        note: "Briefly remind the prospect of where you left off in your last conversation and ask to continue from that point."
                     },
                     { 
                         p: "I'm busy right now.", 
-                        c: `I completely understand. I can drop a quick 2-page sample growth report tailored to ${comp} via WhatsApp or email so you can evaluate it at your convenience.` 
+                        c: `I completely understand, ${name}. When would be a suitable time today or tomorrow to set up a quick 5-minute call?`,
+                        note: null
                     }
-                ],
-                1: [ // Hesitant
-                    { 
-                        p: "Come again? Who is this?", 
-                        c: `This is [Your Name] with Meridian Growth Partners. We provide specialized growth consultancy and market research for Indian manufacturing leaders.` 
-                    },
-                    { 
-                        p: "Okay, go ahead.", 
-                        c: `Appreciate it! I am calling to offer ${comp} a tailored sample growth and market research report, designed to highlight key operational and revenue expansion opportunities.` 
-                    },
-                    { 
-                        p: "Why are you calling?", 
-                        c: `I am reaching out to share a sample growth report tailored to ${comp} and your sector of operations, helping you unlock new growth channels and improve market positioning.` 
-                    },
-                    { 
-                        p: "I'm busy right now.", 
-                        c: `No worries at all. May I email a brief sample growth report tailored for ${comp}? You can glance through it in 2 minutes whenever you are free.` 
-                    }
-                ],
-                2: [ // Neutral
-                    { 
-                        p: "Come again? Who is this?", 
-                        c: `I'm calling from Meridian Growth Partners. We partner with mid-sized manufacturing firms across India to deliver growth strategy and research insights.` 
-                    },
-                    { 
-                        p: "Okay, go ahead.", 
-                        c: `Great! We have prepared a sample growth report tailored to your business and sector. It covers market positioning and growth levers designed to maximize your potential.` 
-                    },
-                    { 
-                        p: "Why are you calling?", 
-                        c: `I wanted to share a sample growth and research report customized for ${comp}, demonstrating how our strategic advisory helps manufacturers scale efficiently.` 
-                    },
-                    { 
-                        p: "I'm busy right now.", 
-                        c: `Understood! Let me send our sector-specific sample growth report directly to your email so you can see the tailored benchmarks we built for ${comp}.` 
-                    }
-                ],
-                3: [ // Receptive
-                    { 
-                        p: "Come again? Who is this?", 
-                        c: `This is [Your Name] from Meridian Growth Partners! We specialize in growth consultancy and allied research services for manufacturing firms in India.` 
-                    },
-                    { 
-                        p: "Okay, go ahead.", 
-                        c: `Fantastic! I am reaching out to share a sample growth report that is tailored specifically to ${comp} and your sector of operations to help you realize your full growth potential.` 
-                    },
-                    { 
-                        p: "Why are you calling?", 
-                        c: `I am reaching out to share a customized growth report tailored to ${comp}. It outlines actionable market research insights to help accelerate your expansion.` 
-                    },
-                    { 
-                        p: "I'm busy right now.", 
-                        c: `I appreciate your time! I can immediately send our tailored sample growth report to your inbox so we can discuss the specific growth levers for ${comp} whenever convenient.` 
-                    }
-                ]
-            };
-            return matrix[moodKey] || matrix[1];
+                ];
+            } else {
+                // NEW PROSPECT RESPONSES: Full pitch with sample growth report
+                const matrixNew = {
+                    0: [
+                        { p: "Come again? Who is this?", c: `I am calling from Meridian Growth Partners. I will take just 30 seconds to share a customized sample growth report specifically structured for ${comp} to help you identify untapped expansion opportunities.` },
+                        { p: "Okay, go ahead.", c: `Thank you. At Meridian Growth Partners, we prepare sector-specific growth reports and market research for Indian manufacturers. I'd love to share a complimentary sample benchmarked for ${comp}.` },
+                        { p: "Why are you calling?", c: `I am reaching out to share a sample growth report tailored to ${comp} and your manufacturing sector to help you realize your business's full growth potential.` },
+                        { p: "I'm busy right now.", c: `I completely understand. I can drop a quick 2-page sample growth report tailored to ${comp} via WhatsApp or email so you can evaluate it at your convenience.` }
+                    ],
+                    1: [
+                        { p: "Come again? Who is this?", c: `This is Roshan with Meridian Growth Partners. We provide specialized growth consultancy and market research for Indian manufacturing leaders.` },
+                        { p: "Okay, go ahead.", c: `Appreciate it! I am calling to offer ${comp} a tailored sample growth and market research report, designed to highlight key operational and revenue expansion opportunities.` },
+                        { p: "Why are you calling?", c: `I am reaching out to share a sample growth report tailored to ${comp} and your sector of operations, helping you unlock new growth channels and improve market positioning.` },
+                        { p: "I'm busy right now.", c: `No worries at all. May I email a brief sample growth report tailored for ${comp}? You can glance through it in 2 minutes whenever you are free.` }
+                    ],
+                    2: [
+                        { p: "Come again? Who is this?", c: `I'm calling from Meridian Growth Partners. We partner with mid-sized manufacturing firms across India to deliver growth strategy and research insights.` },
+                        { p: "Okay, go ahead.", c: `Great! We have prepared a sample growth report tailored to your business and sector. It covers market positioning and growth levers designed to maximize your potential.` },
+                        { p: "Why are you calling?", c: `I wanted to share a sample growth and research report customized for ${comp}, demonstrating how our strategic advisory helps manufacturers scale efficiently.` },
+                        { p: "I'm busy right now.", c: `Understood! Let me send our sector-specific sample growth report directly to your email so you can see the tailored benchmarks we built for ${comp}.` }
+                    ],
+                    3: [
+                        { p: "Come again? Who is this?", c: `This is Roshan from Meridian Growth Partners! We specialize in growth consultancy and allied research services for manufacturing firms in India.` },
+                        { p: "Okay, go ahead.", c: `Fantastic! I am reaching out to share a sample growth report that is tailored specifically to ${comp} and your sector of operations to help you realize your full growth potential.` },
+                        { p: "Why are you calling?", c: `I am reaching out to share a customized growth report tailored to ${comp}. It outlines actionable market research insights to help accelerate your expansion.` },
+                        { p: "I'm busy right now.", c: `I appreciate your time! I can immediately send our tailored sample growth report to your inbox so we can discuss the specific growth levers for ${comp} whenever convenient.` }
+                    ]
+                };
+                return matrixNew[moodKey] || matrixNew[1];
+            }
         }
 
         function renderInitialResponses(moodKey = 1) {
@@ -615,7 +621,19 @@
         function selectResponse(moodKey, responseIdx) {
             const responses = getStage1Playbook(moodKey);
             const item = responses[responseIdx];
+            
             document.getElementById('callerReplyText').innerText = item.c;
+
+            const noteBox = document.getElementById('callerNoteBox');
+            const noteText = document.getElementById('callerNoteText');
+
+            if (item.note) {
+                noteText.innerText = item.note;
+                noteBox.classList.remove('hidden');
+            } else {
+                noteBox.classList.add('hidden');
+            }
+
             document.getElementById('callerReplyBox').classList.remove('hidden');
         }
 
