@@ -154,6 +154,8 @@
       const btnText = document.getElementById('btnText');
       const btnSpinner = document.getElementById('btnSpinner');
 
+      console.log("🚀 Attempting login for Employee ID:", employee_id);
+
       // Reset Error Display State
       errorDisplay.classList.add('hidden');
       errorDisplay.textContent = '';
@@ -171,18 +173,27 @@
         });
 
         const result = await response.json();
+        console.log("📥 API Response received:", result);
 
         if (response.ok && result.success) {
+          console.log("✅ Success condition met! Saving employee_id to localStorage...");
+          
           // Save employee_id to localStorage for tracking in call logs
           localStorage.setItem('employee_id', employee_id);
+          
+          console.log("🔍 Verified localStorage employee_id:", localStorage.getItem('employee_id'));
 
           // Redirect on success to dashboard.html
-          window.location.href = result.redirectUrl || '/dashboard.html';
+          const targetUrl = result.redirectUrl || '/dashboard.html';
+          console.log("🌐 Redirecting to:", targetUrl);
+          
+          window.location.href = targetUrl;
         } else {
+          console.warn("⚠️ Login rejected or success was false:", result);
           showError(result.message || 'Invalid credentials. Please try again.');
         }
       } catch (error) {
-        console.error('Network error:', error);
+        console.error('❌ Network error during login:', error);
         showError('Unable to reach auth server. Please check your network.');
       } finally {
         // Restore Button State
