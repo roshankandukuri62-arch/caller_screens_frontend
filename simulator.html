@@ -427,31 +427,39 @@
                 div.className = "p-3 rounded-2xl bg-white border border-pink-100 text-gray-800 text-xs mr-auto max-w-[80%] shadow-sm font-medium";
                 div.innerText = text;
             } else if (sender === 'report') {
-                // Styled with a clean glass-panel background, matching the app's aesthetic
-                div.className = "p-5 rounded-3xl bg-white/90 border border-pink-200 text-gray-800 text-xs my-4 space-y-3 shadow-lg leading-relaxed backdrop-blur-md";
+                // Crisp white glass card styling with zero green tint
+                div.className = "p-6 rounded-3xl bg-white/95 border border-pink-200 text-gray-800 text-xs my-4 space-y-4 shadow-xl leading-relaxed backdrop-blur-md";
                 
-                let formattedHtml = `<div class="flex items-center gap-2 pb-2 border-b border-pink-200 text-pink-700 font-extrabold text-sm uppercase tracking-wider">
+                let headerHtml = `<div class="flex items-center gap-2 pb-3 border-b border-pink-200 text-pink-700 font-extrabold text-sm uppercase tracking-wider">
                     <span>📊 Call Evaluation & Performance Report</span>
                 </div>`;
-                
-                const cleanedText = text
+
+                // Clean up markdown hashes, dividers, and format bolding cleanly
+                let cleanedText = text
+                    .replace(/###\s*/g, '')
+                    .replace(/---/g, '')
                     .replace(/\*\*\*(.*?)\*\*\*/g, '<strong>$1</strong>')
                     .replace(/\*\*(.*?)\*\*/g, '<strong class="text-pink-900 font-bold">$1</strong>')
                     .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
                 const lines = cleanedText.split('\n').filter(line => line.trim() !== '');
-                let bodyContent = '<div class="space-y-2 mt-2">';
+                let bodyContent = '<div class="space-y-3 mt-2">';
                 
                 lines.forEach(line => {
-                    if (line.trim().startsWith('-') || line.trim().startsWith('*')) {
-                        bodyContent += `<div class="flex items-start gap-2 pl-2"><span class="text-pink-500 font-bold">•</span><span>${line.replace(/^[-\*]\s*/, '')}</span></div>`;
+                    const trimmed = line.trim();
+                    if (trimmed.endsWith(':') && !trimmed.startsWith('1.') && !trimmed.startsWith('2.') && !trimmed.startsWith('3.')) {
+                        bodyContent += `<h4 class="font-extrabold text-pink-700 text-xs uppercase tracking-wide mt-3 mb-1">${trimmed}</h4>`;
+                    } else if (/^\d+\./.test(trimmed)) {
+                        bodyContent += `<div class="flex items-start gap-2 pl-2 py-1"><span class="text-pink-600 font-bold shrink-0">•</span><span>${trimmed.replace(/^\d+\.\s*/, '')}</span></div>`;
+                    } else if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
+                        bodyContent += `<div class="flex items-start gap-2 pl-2 py-1"><span class="text-pink-600 font-bold shrink-0">•</span><span>${trimmed.replace(/^[-\*]\s*/, '')}</span></div>`;
                     } else {
-                        bodyContent += `<p>${line}</p>`;
+                        bodyContent += `<p class="text-gray-700 leading-relaxed">${trimmed}</p>`;
                     }
                 });
                 bodyContent += '</div>';
 
-                div.innerHTML = formattedHtml + bodyContent;
+                div.innerHTML = headerHtml + bodyContent;
             } else {
                 div.className = "p-2 rounded-xl bg-gray-200/70 text-gray-700 text-[11px] text-center italic font-bold my-2";
                 div.innerText = text;
