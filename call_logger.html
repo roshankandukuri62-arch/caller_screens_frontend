@@ -51,42 +51,6 @@
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1;
         }
         .container-relative { position: relative; z-index: 10; }
-
-        /* Custom Vertical Spectrum Slider */
-        input[type=range].spectrum-slider {
-            -webkit-appearance: none;
-            appearance: none;
-            writing-mode: bt-lr;
-            width: 10px;
-            height: 220px;
-            background: #cbd5e1;
-            border-radius: 999px;
-            outline: none;
-        }
-        input[type=range].spectrum-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #ec4899;
-            border: 3px solid #ffffff;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: transform 0.1s ease;
-        }
-        input[type=range].spectrum-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.15);
-        }
-        input[type=range].spectrum-slider::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #ec4899;
-            border: 3px solid #ffffff;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
     </style>
 </head>
 <body class="min-h-screen p-4 sm:p-8 select-none relative">
@@ -201,28 +165,36 @@
                 <!-- Main Interactive Playbook Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                     
-                    <!-- Vertical Sentiment Spectrum Control -->
-                    <div class="md:col-span-3 glass-panel p-5 rounded-2xl flex flex-col items-center space-y-3 text-center">
-                        <label class="text-[11px] font-extrabold text-pink-800 uppercase tracking-wider">Prospect Mood</label>
+                    <!-- Vertical Custom Spectrum Component -->
+                    <div class="md:col-span-4 glass-panel p-5 rounded-2xl flex flex-col items-center space-y-3 text-center">
+                        <label class="text-[11px] font-extrabold text-pink-800 uppercase tracking-wider">PROSPECT MOOD</label>
                         
-                        <div class="flex items-center justify-center gap-4 my-2">
-                            <input type="range" min="0" max="3" value="1" step="1" id="sentimentSlider" class="spectrum-slider" oninput="updateSpectrumState()" onchange="updateSpectrumState()">
+                        <div class="flex items-center justify-center gap-6 my-2 w-full px-2">
+                            <!-- Custom Interactive Bar Component -->
+                            <div id="spectrumTrack" class="relative w-3 h-[220px] bg-gray-200 rounded-full cursor-pointer flex flex-col justify-end">
+                                <!-- Colored Progress Fill Line -->
+                                <div id="spectrumFill" class="w-full bg-orange-500 rounded-full transition-all duration-200" style="height: 33.3%;"></div>
+                                
+                                <!-- Floating Draggable Handle -->
+                                <div id="spectrumThumb" class="absolute left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-pink-500 border-4 border-white shadow-md cursor-grab transition-all" style="bottom: calc(33.3% - 12px);"></div>
+                            </div>
                             
-                            <div class="flex flex-col justify-between h-[220px] text-[10px] font-extrabold text-gray-600 text-left py-1">
-                                <span class="text-emerald-600 cursor-pointer" onclick="setSliderValue(3)">Receptive</span>
-                                <span class="text-yellow-600 cursor-pointer" onclick="setSliderValue(2)">Neutral</span>
-                                <span class="text-orange-600 cursor-pointer" onclick="setSliderValue(1)">Hesitant</span>
-                                <span class="text-red-600 cursor-pointer" onclick="setSliderValue(0)">Disinterested</span>
+                            <!-- Clickable Label Checkpoints -->
+                            <div class="flex flex-col justify-between h-[220px] text-xs font-bold text-left py-1">
+                                <span class="text-emerald-600 hover:opacity-80 cursor-pointer" onclick="setMood(3)">Receptive</span>
+                                <span class="text-yellow-600 hover:opacity-80 cursor-pointer" onclick="setMood(2)">Neutral</span>
+                                <span class="text-orange-600 hover:opacity-80 cursor-pointer" onclick="setMood(1)">Hesitant</span>
+                                <span class="text-red-600 hover:opacity-80 cursor-pointer" onclick="setMood(0)">Disinterested</span>
                             </div>
                         </div>
 
-                        <div id="sentimentBadge" class="w-full py-1.5 px-2 rounded-xl text-xs font-bold text-white bg-orange-500 shadow-sm transition-all">
+                        <div id="sentimentBadge" class="w-full py-2 px-3 rounded-2xl text-xs font-bold text-white bg-orange-500 shadow-sm transition-all text-center">
                             Hesitant
                         </div>
                     </div>
 
                     <!-- Stage 1 Initial Replies Playbook -->
-                    <div class="md:col-span-9 space-y-4">
+                    <div class="md:col-span-8 space-y-4">
                         <div class="text-xs font-bold text-gray-700 flex justify-between items-center">
                             <span>Initial Prospect Response to Introduction:</span>
                             <span class="text-[10px] text-pink-600 font-normal">*Click a response to view tailored caller reply</span>
@@ -286,7 +258,7 @@
         ];
 
         let currentTab = 0;
-        let prospectData = { isNew: '', company: '', name: '', role: '', mood: 'Hesitant' };
+        let prospectData = { isNew: '', company: '', name: '', role: '', moodIndex: 1 };
         let cachedCompanies = [];
 
         // Render Tabs Header
@@ -451,13 +423,85 @@
             return prospectData.isNew !== '' && prospectData.company !== '' && prospectData.name !== '' && prospectData.role !== '';
         }
 
-        // Mood Mapping Configuration
+        // Mood Config with Exact Zone Colors
         const moodMap = {
-            0: { name: "Disinterested", color: "bg-red-500" },
-            1: { name: "Hesitant", color: "bg-orange-500" },
-            2: { name: "Neutral", color: "bg-yellow-500" },
-            3: { name: "Receptive", color: "bg-emerald-500" }
+            0: { name: "Disinterested", fillClass: "bg-red-500", handleColor: "#ef4444", percent: 0 },
+            1: { name: "Hesitant", fillClass: "bg-orange-500", handleColor: "#f97316", percent: 33.3 },
+            2: { name: "Neutral", fillClass: "bg-yellow-500", handleColor: "#eab308", percent: 66.6 },
+            3: { name: "Receptive", fillClass: "bg-emerald-500", handleColor: "#22c55e", percent: 100 }
         };
+
+        function setMood(index) {
+            index = Math.max(0, Math.min(3, index));
+            prospectData.moodIndex = index;
+            const mood = moodMap[index];
+
+            // Update fill line and thumb position
+            const fill = document.getElementById('spectrumFill');
+            const thumb = document.getElementById('spectrumThumb');
+
+            fill.style.height = `${mood.percent}%`;
+            fill.className = `w-full rounded-full transition-all duration-200 ${mood.fillClass}`;
+
+            thumb.style.bottom = `calc(${mood.percent}% - 12px)`;
+            thumb.style.borderColor = mood.handleColor;
+
+            // Update Badges
+            const badge = document.getElementById('sentimentBadge');
+            badge.innerText = mood.name;
+            badge.className = `w-full py-2 px-3 rounded-2xl text-xs font-bold text-white shadow-sm transition-all text-center ${mood.fillClass}`;
+
+            const bannerMoodTag = document.getElementById('bannerMoodTag');
+            if (bannerMoodTag) {
+                bannerMoodTag.innerText = `Mood: ${mood.name}`;
+                bannerMoodTag.className = `px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm ${mood.fillClass}`;
+            }
+
+            renderInitialResponses(index);
+        }
+
+        // Custom Drag & Click Handling for the Spectrum Bar
+        let isDragging = false;
+        const track = document.getElementById('spectrumTrack');
+
+        function handlePointerMove(e) {
+            if (!track) return;
+            const rect = track.getBoundingClientRect();
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            if (!clientY) return;
+
+            // Calculate percentage from bottom to top
+            let offsetY = rect.bottom - clientY;
+            let ratio = Math.max(0, Math.min(1, offsetY / rect.height));
+
+            let closestIndex = Math.round(ratio * 3);
+            setMood(closestIndex);
+        }
+
+        if (track) {
+            track.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                handlePointerMove(e);
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) handlePointerMove(e);
+            });
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // Mobile Touch Support
+            track.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                handlePointerMove(e);
+            });
+            window.addEventListener('touchmove', (e) => {
+                if (isDragging) handlePointerMove(e);
+            });
+            window.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+        }
 
         // Tailored Playbook Matrix mapped by Mood
         function getStage1Playbook(moodKey) {
@@ -540,34 +584,6 @@
             return matrix[moodKey] || matrix[1];
         }
 
-        function setSliderValue(val) {
-            const slider = document.getElementById('sentimentSlider');
-            slider.value = val;
-            updateSpectrumState();
-        }
-
-        function updateSpectrumState() {
-            const slider = document.getElementById('sentimentSlider');
-            const val = parseInt(slider.value, 10);
-            const mood = moodMap[val];
-
-            // Update prospect mood globally
-            prospectData.mood = mood.name;
-
-            // Update local badge & top banner badge
-            const badge = document.getElementById('sentimentBadge');
-            badge.innerText = mood.name;
-            badge.className = `w-full py-1.5 px-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all ${mood.color}`;
-
-            const bannerMoodTag = document.getElementById('bannerMoodTag');
-            if (bannerMoodTag) {
-                bannerMoodTag.innerText = `Mood: ${mood.name}`;
-                bannerMoodTag.className = `px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm ${mood.color}`;
-            }
-
-            renderInitialResponses(val);
-        }
-
         function renderInitialResponses(moodKey = 1) {
             const responses = getStage1Playbook(moodKey);
             const grid = document.getElementById('prospectResponsesGrid');
@@ -598,7 +614,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             renderTabs();
-            updateSpectrumState();
+            setMood(1);
         });
     </script>
 
