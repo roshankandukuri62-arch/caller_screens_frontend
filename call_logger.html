@@ -52,27 +52,44 @@
         }
         .container-relative { position: relative; z-index: 10; }
 
-        /* Custom Vertical Spectrum Slider */
+        /* Fixed Spectrum Slider: Single Dot Indicator without Solid Blue Track Fill */
         input[type=range].spectrum-slider {
             -webkit-appearance: none;
+            appearance: none;
             writing-mode: bt-lr;
-            appearance: slider-vertical;
-            width: 12px;
+            width: 8px;
             height: 220px;
-            background: linear-gradient(to top, #ef4444 0%, #f97316 35%, #eab308 65%, #22c55e 100%);
-            border-radius: 8px;
+            background: #cbd5e1; /* Neutral light guide bar */
+            border-radius: 999px;
             outline: none;
         }
+        /* Chrome/Safari/Edge Thumb */
         input[type=range].spectrum-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            background: #ffffff;
-            border: 3px solid #ec4899;
+            background: #ec4899;
+            border: 3px solid #ffffff;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+        /* Firefox Thumb */
+        input[type=range].spectrum-slider::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ec4899;
+            border: 3px solid #ffffff;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        input[type=range].spectrum-slider::-webkit-slider-runnable-track {
+            background: #e2e8f0;
+            border-radius: 999px;
+            width: 8px;
         }
     </style>
 </head>
@@ -95,7 +112,7 @@
             </div>
         </div>
 
-        <!-- Dynamic On Call Banner (Shown from Tab 1 onwards) -->
+        <!-- Dynamic On Call Banner -->
         <div id="onCallBanner" class="hidden glass-card rounded-2xl p-4 border-l-8 border-pink-500 flex items-center justify-between">
             <div>
                 <div class="text-[10px] font-extrabold text-pink-700 uppercase tracking-widest">On a call with</div>
@@ -142,7 +159,7 @@
                         </div>
                     </div>
 
-                    <!-- Company Name Box (Dynamic Dropdown / Input) -->
+                    <!-- Company Name Box -->
                     <div class="glass-panel p-5 rounded-2xl space-y-2 relative">
                         <label class="text-xs font-bold text-pink-700 uppercase">Company Name</label>
                         <div id="companyInputContainer" class="relative">
@@ -177,15 +194,15 @@
             <div id="tabContent-1" class="tab-pane hidden space-y-6">
                 <!-- Guidance Header Phrase -->
                 <div class="p-4 rounded-2xl bg-gradient-to-r from-pink-100/80 to-blue-100/80 border border-white text-xs text-pink-900 font-semibold leading-relaxed">
-                    💡 <strong>Stage Focus:</strong> "Say who you are and clearly state your identity. If it's an existing contact, briefly remind them of your last interaction; if it's someone new, make a polite, composed introduction without rushing into a sales pitch."
+                    💡 <strong>Stage Focus:</strong> State who you are, identify your company, and establish immediate context. Keep it composed, respectful, and brief.
                 </div>
 
                 <!-- Main Interactive Playbook Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                     
-                    <!-- Vertical Sentiment Spectrum Control (Cols 3) -->
+                    <!-- Vertical Sentiment Spectrum Control (Single Point Thumb) -->
                     <div class="md:col-span-3 glass-panel p-5 rounded-2xl flex flex-col items-center space-y-3 text-center">
-                        <label class="text-[11px] font-extrabold text-pink-800 uppercase tracking-wider">Prospect Sentiment</label>
+                        <label class="text-[11px] font-extrabold text-pink-800 uppercase tracking-wider">Prospect Mood</label>
                         
                         <div class="flex items-center justify-center gap-4 my-2">
                             <input type="range" min="0" max="3" value="1" step="1" id="sentimentSlider" class="spectrum-slider" oninput="updateSpectrumState()">
@@ -203,16 +220,16 @@
                         </div>
                     </div>
 
-                    <!-- Expected Responses & Recommended Caller Playbook (Cols 9) -->
+                    <!-- Stage 1 Initial Replies Playbook -->
                     <div class="md:col-span-9 space-y-4">
                         <div class="text-xs font-bold text-gray-700 flex justify-between items-center">
-                            <span>Likely Prospect Responses at this stage:</span>
-                            <span class="text-[10px] text-pink-600 font-normal">*Click a response box to view best caller reply</span>
+                            <span>Initial Prospect Response to Greeting:</span>
+                            <span class="text-[10px] text-pink-600 font-normal">*Click a response to view recommended reply</span>
                         </div>
 
-                        <!-- 4 Mini Response Cards -->
+                        <!-- 4 Exact Initial Responses -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="prospectResponsesGrid">
-                            <!-- Populated dynamically based on slider position -->
+                            <!-- Rendered via JS -->
                         </div>
 
                         <!-- Selected Reply Playbook Box -->
@@ -229,8 +246,8 @@
 
                 <!-- Stage Specific Notes -->
                 <div class="glass-panel p-4 rounded-2xl space-y-2">
-                    <label class="text-xs font-bold text-pink-700 uppercase">Stage 1 Notes & Observations</label>
-                    <textarea id="notesStage1" rows="3" placeholder="Record exact phrases used by prospect, key objections, or specific notes..." class="w-full p-3 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400"></textarea>
+                    <label class="text-xs font-bold text-pink-700 uppercase">Stage 1 Notes & Statements</label>
+                    <textarea id="notesStage1" rows="3" placeholder="Record exact phrases or introductory notes..." class="w-full p-3 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400"></textarea>
                 </div>
 
                 <!-- Stage Navigation Footer -->
@@ -344,7 +361,7 @@
             }
         }
 
-        // Prospect Details Logic (Interactive Searchable Dropdown)
+        // Prospect Details Logic
         async function toggleProspectMode(mode) {
             prospectData.isNew = mode;
             const input = document.getElementById('inputCompanyName');
@@ -373,7 +390,6 @@
             validateProspectTab();
         }
 
-        // Searchable Dropdown Event Listeners for Company Name Box
         const companyInput = document.getElementById('inputCompanyName');
         const companyDropdown = document.getElementById('dropdownCompanyList');
 
@@ -412,7 +428,6 @@
             });
         }
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!companyInput.contains(e.target) && !companyDropdown.contains(e.target)) {
                 companyDropdown.classList.add('hidden');
@@ -435,46 +450,46 @@
             return prospectData.isNew !== '' && prospectData.company !== '' && prospectData.name !== '' && prospectData.role !== '';
         }
 
-        // Stage 1 Spectrum Data (Tailored for Indian Industrial Context)
+        // Strict English Stage 1 Playbook Data
         const stage1Playbook = {
             0: { // Red - Disinterested
-                state: "Extremely Disinterested",
+                state: "Disinterested",
                 color: "bg-red-500",
                 responses: [
-                    { p: "Abhi time nahi hai, baad mein call karo.", c: "Aapka exact 30 seconds lunga sir. Agar irrelevant lage toh main khud phone rakh doonga." },
-                    { p: "Humare paas pehle se vendors hain.", c: "Bilkul sir, hum existing vendors ko replace nahi kar rahe. Bas ek comparative price-check ke liye 1 minute chahte hain." },
-                    { p: "Mujhe koi requirement nahi hai.", c: "Samajh gaya sir. Kya main aapko ek brief brochure WhatsApp kar doon future reference ke liye?" },
-                    { p: "Ye sab advertisement calls mat karo.", c: "Maafi chahta hoon sir, ye generic sales call nahi hai. Specially aapke plant location ke regard mein tha." }
+                    { p: "I'm busy right now.", c: "I completely understand. I will take exactly 30 seconds to explain why I am calling, and if it's not relevant, I will disconnect immediately." },
+                    { p: "Why are you calling?", c: "I am reaching out specifically regarding component supply and quality optimization for your plant." },
+                    { p: "Come again? Who is this?", c: "I am [Your Name] from PDGMS. We assist manufacturing companies with direct industrial component sourcing." },
+                    { p: "Okay, go ahead.", c: "Thank you. I am reaching out to discuss how we support manufacturing operations like yours with verified component supplies." }
                 ]
             },
             1: { // Orange - Hesitant
-                state: "Hesitant / Busy",
+                state: "Hesitant",
                 color: "bg-orange-500",
                 responses: [
-                    { p: "WhatsApp pe details bhej do.", c: "Zaroor sir, main WhatsApp bhej raha hoon. Lekin specific requirement ke hisaab se customize karne ke liye 2 quick questions pooch sakta hoon?" },
-                    { p: "Aap kaun bol rahe ho aur kahan se?", c: "Sir main PDGMS se [Name] bol raha hoon. Hum industrial manufacturers ko supply chain components mein help karte hain." },
-                    { p: "Directly procurement team se baat karo.", c: "Bilkul sir, kya aap mujhe procurement manager ka direct extension ya naam share kar sakte hain?" },
-                    { p: "Pehle rate sheet mail karo.", c: "Mail zaroor kar deta hoon sir. Aapka approximate monthly batch requirement kitna rehta hai?" }
+                    { p: "I'm busy right now.", c: "No problem at all. When would be a better time today for a brief 2-minute conversation?" },
+                    { p: "Why are you calling?", c: "We are introducing specialized component solutions to mid-sized industrial units in your region." },
+                    { p: "Come again? Who is this?", c: "This is [Your Name] calling from PDGMS. We recently collaborated with regional manufacturers in your sector." },
+                    { p: "Okay, go ahead.", c: "Appreciate your time. We specialize in reducing machine component downtime for manufacturing plants." }
                 ]
             },
             2: { // Yellow - Neutral
-                state: "Neutral / Considering",
+                state: "Neutral",
                 color: "bg-yellow-500",
                 responses: [
-                    { p: "Haan bolo, kya product hai aapka?", c: "Sir hum high-grade components manufacture karte hain jo machine downtime 20% tak kam kar deta hai." },
-                    { p: "Aapka manufacturing unit kahan pe hai?", c: "Humara main plant/hub regional cluster mein hai sir, jahan se 24-48 hours mein dispatch ho jata hai." },
-                    { p: "Aapke existing clients kaun hain?", c: "Hum mid-size manufacturing leaders ke saath kaam karte hain. Industrial units mein humare standard parts active hain." },
-                    { p: "Aap minimum order quantity (MOQ) kitna rakhte ho?", c: "Hum initial trial runs ke liye flexible MOQ provide karte hain taaki aap quality evaluate kar sakein." }
+                    { p: "I'm busy right now.", c: "Understood. Should I send a brief introductory overview to your email or WhatsApp for you to review later?" },
+                    { p: "Why are you calling?", c: "We are reaching out to evaluate if our supply chain pricing models offer better margins for your plant requirements." },
+                    { p: "Come again? Who is this?", c: "My name is [Your Name] with PDGMS. I am calling to connect regarding your ongoing procurement requirements." },
+                    { p: "Okay, go ahead.", c: "Great! We provide high-precision industrial parts designed to minimize operational maintenance costs." }
                 ]
             },
             3: { // Green - Receptive
-                state: "Receptive / Ready to Listen",
+                state: "Receptive",
                 color: "bg-emerald-500",
                 responses: [
-                    { p: "Aapka sample testing ke liye mil sakta hai?", c: "Haan bilkul sir, hum 2 din ke andar sample kit dispatch kar sakte hain aapke plant address pe." },
-                    { p: "Aapke pricing model mein kya flexibility hai?", c: "Sir volume-based tier pricing hai. Aapke annual contract pe hum bulk discounts structure kar sakte hain." },
-                    { p: "Kya aapke engineer humare plant visit kar sakte hain?", c: "Definitely sir, humare technical team member iss week aapke location pe survey ke liye aa sakte hain." },
-                    { p: "Aap technical specification sheet bhej sakte ho?", c: "Main abhi aapke email aur WhatsApp dono pe spec sheet with test certificates send kar raha hoon sir." }
+                    { p: "I'm busy right now.", c: "I appreciate you taking my call. I can quickly send over our technical specification summary right away." },
+                    { p: "Why are you calling?", c: "We are expanding our vendor network in your area and wanted to discuss direct supply options with your purchase team." },
+                    { p: "Come again? Who is this?", c: "I am [Your Name] from PDGMS. I was hoping to speak briefly regarding your current manufacturing component needs." },
+                    { p: "Okay, go ahead.", c: "Thank you. We work directly with plant heads to supply tested, certified industrial hardware with fast local delivery." }
                 ]
             }
         };
@@ -490,7 +505,7 @@
             const grid = document.getElementById('prospectResponsesGrid');
             grid.innerHTML = data.responses.map((item, idx) => `
                 <div onclick="selectResponse(${val}, ${idx})" class="p-3 rounded-xl bg-white/80 hover:bg-pink-100/80 border border-white cursor-pointer transition-all shadow-sm">
-                    <div class="text-[10px] font-bold text-pink-700 uppercase mb-1">Prospect Statement</div>
+                    <div class="text-[10px] font-bold text-pink-700 uppercase mb-1">Prospect Reply</div>
                     <p class="text-xs text-gray-800 font-medium">"${item.p}"</p>
                 </div>
             `).join('');
