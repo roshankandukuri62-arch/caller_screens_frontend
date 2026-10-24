@@ -681,24 +681,21 @@
             const responses = getStagePlaybook(stageId, moodKey);
             const item = responses[responseIdx];
 
-            // Store internally in prospectData state with full Stage 1 tracking support
+            // Record selected responses with caller_note preserved for Stage 1
             if (stageId === 1) {
                 prospectData.selectedResponses[`stage_1`] = {
-                    timestamp: new Date().toISOString(),
                     mood: moodMap[moodKey].name,
                     prospect_statement: item.p,
-                    caller_reply: item.c,
                     caller_note: item.note || null
                 };
             } else {
                 prospectData.selectedResponses[`stage_${stageId}`] = {
-                    timestamp: new Date().toISOString(),
                     mood: moodMap[moodKey].name,
-                    prospect_statement: item.p,
-                    log_summary: item.log || item.p
+                    prospect_statement: item.p
                 };
             }
 
+            // UI Display updates (remains fully functional on screen)
             const replyBox = document.getElementById(`callerReplyBox-${stageId}`);
             const replyText = document.getElementById(`callerReplyText-${stageId}`);
             const noteBox = document.getElementById(`callerNoteBox-${stageId}`);
