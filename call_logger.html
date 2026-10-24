@@ -681,19 +681,11 @@
             const responses = getStagePlaybook(stageId, moodKey);
             const item = responses[responseIdx];
 
-            // Record selected responses with caller_note preserved for Stage 1
-            if (stageId === 1) {
-                prospectData.selectedResponses[`stage_1`] = {
-                    mood: moodMap[moodKey].name,
-                    prospect_statement: item.p,
-                    caller_note: item.note || null
-                };
-            } else {
-                prospectData.selectedResponses[`stage_${stageId}`] = {
-                    mood: moodMap[moodKey].name,
-                    prospect_statement: item.p
-                };
-            }
+            // Record ONLY mood and prospect_statement for each stage in the JSON payload
+            prospectData.selectedResponses[`stage_${stageId}`] = {
+                mood: moodMap[moodKey].name,
+                prospect_statement: item.p
+            };
 
             // UI Display updates (remains fully functional on screen)
             const replyBox = document.getElementById(`callerReplyBox-${stageId}`);
