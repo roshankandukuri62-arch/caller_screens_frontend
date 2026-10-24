@@ -52,7 +52,7 @@
         }
         .container-relative { position: relative; z-index: 10; }
 
-        /* Interactive Spectrum Slider */
+        /* Custom Vertical Spectrum Slider */
         input[type=range].spectrum-slider {
             -webkit-appearance: none;
             appearance: none;
@@ -178,7 +178,7 @@
                     <!-- Prospect Role Box -->
                     <div class="glass-panel p-5 rounded-2xl space-y-2">
                         <label class="text-xs font-bold text-pink-700 uppercase">Prospect Role</label>
-                        <input type="text" id="inputProspectRole" placeholder="e.g. Director / Plant Head / MD" oninput="validateProspectTab()" class="w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400">
+                        <input type="text" id="inputProspectRole" placeholder="e.g. Managing Director / Plant Head" oninput="validateProspectTab()" class="w-full px-3 py-2 rounded-xl bg-white/80 border border-white text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-400">
                     </div>
                 </div>
 
@@ -195,7 +195,7 @@
             <div id="tabContent-1" class="tab-pane hidden space-y-6">
                 <!-- Guidance Header Phrase -->
                 <div class="p-4 rounded-2xl bg-gradient-to-r from-pink-100/80 to-blue-100/80 border border-white text-xs text-pink-900 font-semibold leading-relaxed">
-                    💡 <strong>Stage Focus:</strong> State who you are and introduce Meridian Growth Partners clearly. If it's an existing contact, briefly remind them of your prior discussion; if new, introduce yourself politely as a growth consultancy partner.
+                    💡 <strong>Stage Focus:</strong> State who you are and introduce Meridian Growth Partners clearly. If it's an existing contact, remind them of your prior interaction; if new, politely offer a tailored sample growth report to help them realize their business's full growth potential.
                 </div>
 
                 <!-- Main Interactive Playbook Grid -->
@@ -206,13 +206,13 @@
                         <label class="text-[11px] font-extrabold text-pink-800 uppercase tracking-wider">Prospect Mood</label>
                         
                         <div class="flex items-center justify-center gap-4 my-2">
-                            <input type="range" min="0" max="3" value="1" step="1" id="sentimentSlider" class="spectrum-slider">
+                            <input type="range" min="0" max="3" value="1" step="1" id="sentimentSlider" class="spectrum-slider" oninput="updateSpectrumState()" onchange="updateSpectrumState()">
                             
                             <div class="flex flex-col justify-between h-[220px] text-[10px] font-extrabold text-gray-600 text-left py-1">
-                                <span class="text-emerald-600">Receptive</span>
-                                <span class="text-yellow-600">Neutral</span>
-                                <span class="text-orange-600">Hesitant</span>
-                                <span class="text-red-600">Disinterested</span>
+                                <span class="text-emerald-600 cursor-pointer" onclick="setSliderValue(3)">Receptive</span>
+                                <span class="text-yellow-600 cursor-pointer" onclick="setSliderValue(2)">Neutral</span>
+                                <span class="text-orange-600 cursor-pointer" onclick="setSliderValue(1)">Hesitant</span>
+                                <span class="text-red-600 cursor-pointer" onclick="setSliderValue(0)">Disinterested</span>
                             </div>
                         </div>
 
@@ -224,22 +224,22 @@
                     <!-- Stage 1 Initial Replies Playbook -->
                     <div class="md:col-span-9 space-y-4">
                         <div class="text-xs font-bold text-gray-700 flex justify-between items-center">
-                            <span>Initial Prospect Reply to Introduction:</span>
-                            <span class="text-[10px] text-pink-600 font-normal">*Click a response to view recommended reply</span>
+                            <span>Initial Prospect Response to Introduction:</span>
+                            <span class="text-[10px] text-pink-600 font-normal">*Click a response to view tailored caller reply</span>
                         </div>
 
-                        <!-- 4 Exact Initial Responses -->
+                        <!-- 4 Initial Response Boxes -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="prospectResponsesGrid">
-                            <!-- Rendered via JS -->
+                            <!-- Rendered dynamically -->
                         </div>
 
                         <!-- Selected Reply Playbook Box -->
                         <div id="callerReplyBox" class="hidden p-5 rounded-2xl bg-white/90 border-2 border-pink-400 space-y-2 shadow-md">
                             <div class="text-[10px] font-black text-pink-700 uppercase tracking-widest flex items-center gap-1">
-                                <span>🎯 Recommended Reply for Meridian Growth Partners</span>
+                                <span>🎯 Tailored Reply — Meridian Growth Partners</span>
                             </div>
                             <p id="callerReplyText" class="text-xs text-gray-800 font-medium leading-relaxed">
-                                Click any response above to see your best reply.
+                                Click any response above to view your recommended response.
                             </p>
                         </div>
                     </div>
@@ -451,26 +451,7 @@
             return prospectData.isNew !== '' && prospectData.company !== '' && prospectData.name !== '' && prospectData.role !== '';
         }
 
-        // Strict English Stage 1 Initial Responses (Meridian Growth Partners Context)
-        const initialResponsesList = [
-            { 
-                p: "Come again? Who is this?", 
-                c: "This is [Your Name] from Meridian Growth Partners. We provide growth consultancy and allied research services tailored for Indian manufacturing firms." 
-            },
-            { 
-                p: "Okay, go ahead.", 
-                c: "Thank you. I am reaching out to discuss how Meridian Growth Partners assists manufacturing leaders with market research and strategic growth advisory." 
-            },
-            { 
-                p: "Why are you calling?", 
-                c: "I am reaching out specifically to share how we help mid-sized manufacturers scale operations and optimize market strategy through targeted research." 
-            },
-            { 
-                p: "I'm busy right now.", 
-                c: "I completely understand. I will take just 30 seconds to explain our growth consultancy focus, and if it's not relevant, we can connect at a better time." 
-            }
-        ];
-
+        // Mood Mapping Configuration
         const moodMap = {
             0: { name: "Disinterested", color: "bg-red-500" },
             1: { name: "Hesitant", color: "bg-orange-500" },
@@ -478,12 +459,99 @@
             3: { name: "Receptive", color: "bg-emerald-500" }
         };
 
+        // Tailored Playbook Matrix mapped by Mood
+        function getStage1Playbook(moodKey) {
+            const comp = prospectData.company || "your business";
+            
+            const matrix = {
+                0: [ // Disinterested
+                    { 
+                        p: "Come again? Who is this?", 
+                        c: `I am calling from Meridian Growth Partners. I will take just 30 seconds to share a customized sample growth report specifically structured for ${comp} to help you identify untapped expansion opportunities.` 
+                    },
+                    { 
+                        p: "Okay, go ahead.", 
+                        c: `Thank you. At Meridian Growth Partners, we prepare sector-specific growth reports and market research for Indian manufacturers. I'd love to share a complimentary sample benchmarked for ${comp}.` 
+                    },
+                    { 
+                        p: "Why are you calling?", 
+                        c: `I am reaching out to share a sample growth report tailored to ${comp} and your manufacturing sector to help you realize your business's full growth potential.` 
+                    },
+                    { 
+                        p: "I'm busy right now.", 
+                        c: `I completely understand. I can drop a quick 2-page sample growth report tailored to ${comp} via WhatsApp or email so you can evaluate it at your convenience.` 
+                    }
+                ],
+                1: [ // Hesitant
+                    { 
+                        p: "Come again? Who is this?", 
+                        c: `This is [Your Name] with Meridian Growth Partners. We provide specialized growth consultancy and market research for Indian manufacturing leaders.` 
+                    },
+                    { 
+                        p: "Okay, go ahead.", 
+                        c: `Appreciate it! I am calling to offer ${comp} a tailored sample growth and market research report, designed to highlight key operational and revenue expansion opportunities.` 
+                    },
+                    { 
+                        p: "Why are you calling?", 
+                        c: `I am reaching out to share a sample growth report tailored to ${comp} and your sector of operations, helping you unlock new growth channels and improve market positioning.` 
+                    },
+                    { 
+                        p: "I'm busy right now.", 
+                        c: `No worries at all. May I email a brief sample growth report tailored for ${comp}? You can glance through it in 2 minutes whenever you are free.` 
+                    }
+                ],
+                2: [ // Neutral
+                    { 
+                        p: "Come again? Who is this?", 
+                        c: `I'm calling from Meridian Growth Partners. We partner with mid-sized manufacturing firms across India to deliver growth strategy and research insights.` 
+                    },
+                    { 
+                        p: "Okay, go ahead.", 
+                        c: `Great! We have prepared a sample growth report tailored to your business and sector. It covers market positioning and growth levers designed to maximize your potential.` 
+                    },
+                    { 
+                        p: "Why are you calling?", 
+                        c: `I wanted to share a sample growth and research report customized for ${comp}, demonstrating how our strategic advisory helps manufacturers scale efficiently.` 
+                    },
+                    { 
+                        p: "I'm busy right now.", 
+                        c: `Understood! Let me send our sector-specific sample growth report directly to your email so you can see the tailored benchmarks we built for ${comp}.` 
+                    }
+                ],
+                3: [ // Receptive
+                    { 
+                        p: "Come again? Who is this?", 
+                        c: `This is [Your Name] from Meridian Growth Partners! We specialize in growth consultancy and allied research services for manufacturing firms in India.` 
+                    },
+                    { 
+                        p: "Okay, go ahead.", 
+                        c: `Fantastic! I am reaching out to share a sample growth report that is tailored specifically to ${comp} and your sector of operations to help you realize your full growth potential.` 
+                    },
+                    { 
+                        p: "Why are you calling?", 
+                        c: `I am reaching out to share a customized growth report tailored to ${comp}. It outlines actionable market research insights to help accelerate your expansion.` 
+                    },
+                    { 
+                        p: "I'm busy right now.", 
+                        c: `I appreciate your time! I can immediately send our tailored sample growth report to your inbox so we can discuss the specific growth levers for ${comp} whenever convenient.` 
+                    }
+                ]
+            };
+            return matrix[moodKey] || matrix[1];
+        }
+
+        function setSliderValue(val) {
+            const slider = document.getElementById('sentimentSlider');
+            slider.value = val;
+            updateSpectrumState();
+        }
+
         function updateSpectrumState() {
             const slider = document.getElementById('sentimentSlider');
-            const val = slider.value;
+            const val = parseInt(slider.value, 10);
             const mood = moodMap[val];
 
-            // Store selected mood globally for carry forward
+            // Update prospect mood globally
             prospectData.mood = mood.name;
 
             // Update local badge & top banner badge
@@ -497,14 +565,16 @@
                 bannerMoodTag.className = `px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm ${mood.color}`;
             }
 
-            renderInitialResponses();
+            renderInitialResponses(val);
         }
 
-        function renderInitialResponses() {
+        function renderInitialResponses(moodKey = 1) {
+            const responses = getStage1Playbook(moodKey);
             const grid = document.getElementById('prospectResponsesGrid');
-            grid.innerHTML = initialResponsesList.map((item, idx) => `
-                <div onclick="selectResponse(${idx})" class="p-3 rounded-xl bg-white/80 hover:bg-pink-100/80 border border-white cursor-pointer transition-all shadow-sm">
-                    <div class="text-[10px] font-bold text-pink-700 uppercase mb-1">Prospect Statement</div>
+            
+            grid.innerHTML = responses.map((item, idx) => `
+                <div onclick="selectResponse(${moodKey}, ${idx})" class="p-3 rounded-xl bg-white/80 hover:bg-pink-100/80 border border-white cursor-pointer transition-all shadow-sm">
+                    <div class="text-[10px] font-bold text-pink-700 uppercase mb-1">Prospect Reply</div>
                     <p class="text-xs text-gray-800 font-medium">"${item.p}"</p>
                 </div>
             `).join('');
@@ -512,8 +582,9 @@
             document.getElementById('callerReplyBox').classList.add('hidden');
         }
 
-        function selectResponse(responseIdx) {
-            const item = initialResponsesList[responseIdx];
+        function selectResponse(moodKey, responseIdx) {
+            const responses = getStage1Playbook(moodKey);
+            const item = responses[responseIdx];
             document.getElementById('callerReplyText').innerText = item.c;
             document.getElementById('callerReplyBox').classList.remove('hidden');
         }
@@ -527,12 +598,6 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             renderTabs();
-            
-            // Bind slider listener explicitly
-            const slider = document.getElementById('sentimentSlider');
-            slider.addEventListener('input', updateSpectrumState);
-            slider.addEventListener('change', updateSpectrumState);
-
             updateSpectrumState();
         });
     </script>
